@@ -78,9 +78,7 @@ read -p "Masukkan Domain server: " DOMAIN
 # Backup resolv.conf & hosts
 cp /etc/resolv.conf /etc/resolv.conf.backup
 cp /etc/hosts /etc/hosts.backup
-touch /etc/resolv.conf
-echo "nameserver 8.8.8.8" > /etc/resolv.conf
-echo "nameserver $IPADDRESS" >> /etc/resolv.conf
+
 
 # ==== Disable systemd-resolved (Ubuntu/Debian only) ====
 if [ "$OS" == "ubuntu" ]; then
@@ -152,7 +150,7 @@ if [ "$OS" == "ubuntu" ]; then
         /etc/apt/sources.list.d/pgdg.list
     fi
     sudo apt update -y
-    sudo apt install -y postgresql-16 postgresql-client-16
+    sudo apt install -y postgresql-16 
     systemctl enable --now postgresql
     echo "✅ PostgreSQL 16 terinstall & berjalan."
 fi
