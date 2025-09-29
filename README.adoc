@@ -26,7 +26,7 @@ The main goal is to ensure the environment meets the minimum requirements so the
 . Clone the repository
 [source,bash]
 ----
-git clone https://github.com/afatyoo/script-master.git
+git clone https://github.com/afatyoo/Intial-Setup-Carbonio.git
 cd script-master
 ----
 
