@@ -156,7 +156,7 @@ fi
 sleep 3
 
 echo "[6/7] Setup Zextras Repo..."
-echo "deb [arch=amd64 signed-by=/usr/share/keyrings/zextras.gpg] https://repo.zextras.io/release/ubuntu jammy main" > /etc/apt/source.list.d/zextras/list
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/zextras.gpg] https://repo.zextras.io/release/ubuntu jammy main" > /etc/apt/source.list.d/zextras.list
     wget -O- "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x5dc7680bc4378c471a7fa80f52fd40243e584a21" | gpg --dearmor | sudo tee /usr/share/keyrings/zextras.gpg > /dev/null
     chmod 644 /usr/share/keyrings/zextras.gpg
 
