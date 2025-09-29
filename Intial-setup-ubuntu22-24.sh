@@ -8,7 +8,7 @@ sleep 3
 # ==== Check Static IP or DHCP ====
 echo
 echo
-echo "[0/6] Checking network configuration..."
+echo "[0/7] Checking network configuration..."
 if [ -f /etc/redhat-release ]; then
     # RHEL based check
     IFACE=$(nmcli -t -f DEVICE,STATE d | grep ":connected" | cut -d: -f1 | head -n1)
@@ -39,7 +39,7 @@ sleep 3
 # ==== Update system ====
 echo
 echo
-echo "[1/6] Updating system..." 
+echo "[1/7] Updating system..." 
 if [ -f /etc/redhat-release ]; then
     sudo dnf update -y
     sudo dnf install -y epel-release
@@ -59,7 +59,7 @@ sleep 3
 # ==== Install required packages ====
 echo
 echo
-echo "[2/6] Installing required packages..."
+echo "[2/7] Installing required packages..."
 if [ "$OS" == "rhel" ]; then
     sudo $PKG install -y dnsmasq chrony net-tools curl vim perl python3
 else
@@ -70,7 +70,7 @@ sleep 3
 # ==== Setup /etc/hosts & hostname ====
 echo
 echo
-echo "[3/6] Configuring /etc/hosts and hostname..."
+echo "[3/7] Configuring /etc/hosts and hostname..."
 read -p "Masukkan IP Address server: " IPADDRESS
 read -p "Masukkan Hostname server: " HOSTNAME
 read -p "Masukkan Domain server: " DOMAIN
@@ -102,7 +102,7 @@ sleep 3
 # ==== Setup chrony ====
 echo
 echo
-echo "[4/6] Configuring Chrony..."
+echo "[4/7] Configuring Chrony..."
 if [ "$OS" == "rhel" ]; then
     systemctl disable --now ntpd 2>/dev/null || true
     systemctl enable --now chronyd
@@ -119,7 +119,7 @@ sleep 3
 # ==== Disable Firewall ====
 echo
 echo
-echo "[5/6] Disabling Firewall..."
+echo "[5/7] Disabling Firewall..."
 if [ "$OS" == "rhel" ]; then
     systemctl disable --now firewalld 2>/dev/null || true
     echo "🔥 Firewalld sudah dimatikan."
@@ -132,7 +132,7 @@ sleep 3
 # ==== Install PostgreSQL 16 ====
 echo
 echo
-echo "[6/6] Installing PostgreSQL 16..."
+echo "[6/7] Installing PostgreSQL 16..."
 if [ "$OS" == "ubuntu" ]; then
     UBUNTU_VER=$(grep VERSION_ID /etc/os-release | cut -d\" -f2)
     if [ "$UBUNTU_VER" == "22.04" ]; then
@@ -153,6 +153,12 @@ if [ "$OS" == "ubuntu" ]; then
     systemctl enable --now postgresql
     echo "✅ PostgreSQL 16 terinstall & berjalan."
 fi
+sleep 3
+
+echo "[6/7] Setup Zextras Repo..."
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/zextras.gpg] https://repo.zextras.io/release/ubuntu jammy main" > /etc/apt/source.list.d/zextras/list
+    wget -O- "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x5dc7680bc4378c471a7fa80f52fd40243e584a21" | gpg --dearmor | sudo tee /usr/share/keyrings/zextras.gpg > /dev/null
+    chmod 644 /usr/share/keyrings/zextras.gpg
 
 sleep 3
 echo 
