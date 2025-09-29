@@ -9,7 +9,7 @@ The main goal is to ensure the environment meets the minimum requirements so the
 * *RHEL 8/9*  
   link:Initial-Setup-Carbonio-RHEL-8-9.sh[Initial-Setup-Carbonio-RHEL-8-9.sh]
 
-* *Ubuntu 22.04*  
+* *Ubuntu 22/24*  
   link:Intial-setup-ubuntu22-24.sh[Intial-setup-ubuntu22-24.sh]
 
 == 🔧 Features
