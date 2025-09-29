@@ -1,1 +1,59 @@
+= Initial Setup Script for Carbonio
+:icons: font
+:source-highlighter: rouge
 
+These scripts are used to perform an *initial setup and pre-installation check* before installing *Zextras Carbonio* on systems based on *RHEL (8/9)* and *Ubuntu 22.04*.  
+The main goal is to ensure the environment meets the minimum requirements so the Carbonio installation can run smoothly.
+
+== 📂 Available Scripts
+* *RHEL 8/9*  
+  link:Initial-Setup-Carbonio-RHEL-8-9.sh[Initial-Setup-Carbonio-RHEL-8-9.sh]
+
+* *Ubuntu 22.04*  
+  link:Intial-setup-ubuntu22-24.sh[Intial-setup-ubuntu22-24.sh]
+
+== 🔧 Features
+* Check operating system version (RHEL/Ubuntu)
+* Validate hostname & DNS resolution
+* Verify records in `/etc/hosts`
+* Check required packages & dependencies
+* Detect firewall & SELinux/AppArmor status
+* Check for potential conflicting services
+* Provide a report indicating if the server is ready for Carbonio installation
+
+== 🚀 Usage
+
+. Clone the repository
+[source,bash]
+----
+git clone https://github.com/afatyoo/script-master.git
+cd script-master
+----
+
+. Make the scripts executable
+[source,bash]
+----
+chmod +x Initial-Setup-Carbonio-RHEL-8-9.sh
+chmod +x Intial-setup-ubuntu22-24.sh
+----
+
+. Run according to your operating system
+
+*RHEL 8/9*
+[source,bash]
+----
+./Initial-Setup-Carbonio-RHEL-8-9.sh
+----
+
+*Ubuntu 22.04*
+[source,bash]
+----
+./Intial-setup-ubuntu22-24.sh
+----
+
+. Follow the script report and fix any issues before installing Carbonio.
+
+== ⚠️ Notes
+* These scripts *do not install Carbonio*, they only perform environment pre-checks.
+* Run the scripts as *root* or with `sudo`.
+* It is recommended to run on a fresh server installation to avoid package conflicts.
