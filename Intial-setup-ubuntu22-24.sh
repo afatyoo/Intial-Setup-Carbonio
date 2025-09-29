@@ -78,7 +78,9 @@ read -p "Masukkan Domain server: " DOMAIN
 # Backup resolv.conf & hosts
 cp /etc/resolv.conf /etc/resolv.conf.backup
 cp /etc/hosts /etc/hosts.backup
+touch /etc/resolv.conf
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
+echo "nameserver $IPADDRESS" >> /etc/resolv.conf
 
 # ==== Disable systemd-resolved (Ubuntu/Debian only) ====
 if [ "$OS" == "ubuntu" ]; then
