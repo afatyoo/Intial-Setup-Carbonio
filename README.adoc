@@ -27,7 +27,7 @@ The main goal is to ensure the environment meets the minimum requirements so the
 [source,bash]
 ----
 git clone https://github.com/afatyoo/Intial-Setup-Carbonio.git
-cd script-master
+cd Intial-Setup-Carbonio
 ----
 
 . Make the scripts executable
