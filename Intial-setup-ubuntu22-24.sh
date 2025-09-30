@@ -2,9 +2,10 @@
 echo "================================================"
 echo "= Initial Setup Carbonio Script for Ubuntu 22/24="
 echo "= by: TYO-CHAN                                 ="
-echo "================================================" 
+echo "================================================"
 set -e
 sleep 3
+
 # ==== Check Static IP or DHCP ====
 echo
 echo
@@ -20,9 +21,19 @@ if [ -f /etc/redhat-release ]; then
     else
         echo "✅ Server sudah pakai static IP."
     fi
-elif [ -f /etc/lsb-release ] || [ -f /etc/debian_version ]; then
-    # Ubuntu/Debian check via Netplan
-    if grep -q "dhcp4: true" /etc/netplan/*.yaml 2>/dev/null; then
+elif [ -f /etc/lsb-release ]; then
+    # Ubuntu
+    if grep -q "^[[:space:]]*dhcp4:[[:space:]]*true" /etc/netplan/*.yaml 2>/dev/null; then
+        echo "❌ Server masih pakai DHCP (dynamic IP)."
+        echo "👉 Edit /etc/netplan/*.yaml untuk set static IP lalu apply dengan:"
+        echo "   sudo netplan apply"
+        exit 1
+    else
+        echo "✅ Server sudah pakai static IP."
+    fi
+elif [ -f /etc/debian_version ]; then
+    # Debian
+    if grep -q "^[[:space:]]*dhcp4:[[:space:]]*true" /etc/netplan/*.yaml 2>/dev/null; then
         echo "❌ Server masih pakai DHCP (dynamic IP)."
         echo "👉 Edit /etc/netplan/*.yaml untuk set static IP lalu apply dengan:"
         echo "   sudo netplan apply"
@@ -39,17 +50,22 @@ sleep 3
 # ==== Update system ====
 echo
 echo
-echo "[1/7] Updating system..." 
+echo "[1/7] Updating system..."
 if [ -f /etc/redhat-release ]; then
     sudo dnf update -y
     sudo dnf install -y epel-release
     PKG="dnf"
     OS="rhel"
-elif [ -f /etc/lsb-release ] || [ -f /etc/debian_version ]; then
+elif [ -f /etc/lsb-release ]; then
     sudo apt update -y
     sudo apt upgrade -y
     PKG="apt"
     OS="ubuntu"
+elif [ -f /etc/debian_version ]; then
+    sudo apt update -y
+    sudo apt upgrade -y
+    PKG="apt"
+    OS="debian"
 else
     echo "Unsupported OS"
     exit 1
@@ -79,9 +95,8 @@ read -p "Masukkan Domain server: " DOMAIN
 cp /etc/resolv.conf /etc/resolv.conf.backup
 cp /etc/hosts /etc/hosts.backup
 
-
 # ==== Disable systemd-resolved (Ubuntu/Debian only) ====
-if [ "$OS" == "ubuntu" ]; then
+if [ "$OS" == "ubuntu" ] || [ "$OS" == "debian" ]; then
     echo "Menonaktifkan systemd-resolved..."
     systemctl disable --now systemd-resolved 2>/dev/null || true
     rm -f /etc/resolv.conf
@@ -89,8 +104,12 @@ if [ "$OS" == "ubuntu" ]; then
 fi
 
 # Insert localhost sebagai resolver pertama
-sed -i '1 s/^/nameserver 127.0.0.1\n/' /etc/resolv.conf
-sed -i '2 s/^/nameserver 8.8.8.8\n/' /etc/resolv.conf
+cat > /etc/resolv.conf <<EOF
+nameserver 127.0.0.1
+nameserver 8.8.8.8
+nameserver 1.1.1.1
+EOF
+
 
 # Tulis ulang hosts
 echo "127.0.0.1       localhost" > /etc/hosts
@@ -117,16 +136,21 @@ timedatectl set-timezone Asia/Jakarta
 timedatectl set-ntp true
 
 sleep 3
-# ==== Disable Firewall ====
+# ==== Disable Firewall (optional) ====
 echo
 echo
-echo "[5/7] Disabling Firewall..."
-if [ "$OS" == "rhel" ]; then
-    systemctl disable --now firewalld 2>/dev/null || true
-    echo "🔥 Firewalld sudah dimatikan."
+echo "[5/7] Firewall configuration..."
+read -p "Matikan firewall sekarang? (y/n): " FWCHOICE
+if [ "$FWCHOICE" == "y" ]; then
+    if [ "$OS" == "rhel" ]; then
+        systemctl disable --now firewalld 2>/dev/null || true
+        echo "🔥 Firewalld sudah dimatikan."
+    else
+        systemctl disable --now ufw 2>/dev/null || true
+        echo "🔥 UFW sudah dimatikan."
+    fi
 else
-    systemctl disable --now ufw 2>/dev/null || true
-    echo "🔥 UFW sudah dimatikan."
+    echo "⚠️ Firewall tetap aktif, pastikan port untuk Carbonio dibuka manual."
 fi
 
 sleep 3
@@ -134,40 +158,39 @@ sleep 3
 echo
 echo
 echo "[6/7] Installing PostgreSQL 16..."
-if [ "$OS" == "ubuntu" ]; then
-    UBUNTU_VER=$(grep VERSION_ID /etc/os-release | cut -d\" -f2)
-    if [ "$UBUNTU_VER" == "22.04" ]; then
-        echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
-        | sudo tee /etc/apt/sources.list.d/pgdg.list
-        wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-    elif [ "$UBUNTU_VER" == "24.04" ]; then
-        echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
-        | sudo tee /etc/apt/sources.list.d/pgdg.list
-        wget -O- "https://www.postgresql.org/media/keys/ACCC4CF8.asc" | \
-        gpg --dearmor | sudo tee /usr/share/keyrings/postgres.gpg >/dev/null
-        chmod 644 /usr/share/keyrings/postgres.gpg
-        sed -i 's|deb |deb [signed-by=/usr/share/keyrings/postgres.gpg] |' \
-        /etc/apt/sources.list.d/pgdg.list
-    fi
+if [ "$OS" == "ubuntu" ] || [ "$OS" == "debian" ]; then
+    # Tambah repo PostgreSQL
+    echo "deb [signed-by=/usr/share/keyrings/postgres.gpg] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+    | sudo tee /etc/apt/sources.list.d/pgdg.list
+
+    # Download GPG key PostgreSQL
+    wget -qO- "https://www.postgresql.org/media/keys/ACCC4CF8.asc" | \
+    gpg --dearmor | sudo tee /usr/share/keyrings/postgres.gpg >/dev/null
+    chmod 644 /usr/share/keyrings/postgres.gpg
+
+    # Update dan install PostgreSQL 16
     sudo apt update -y
-    sudo apt install -y postgresql-16 
+    sudo apt install -y postgresql-16 postgresql-client-16
     systemctl enable --now postgresql
     echo "✅ PostgreSQL 16 terinstall & berjalan."
 fi
-sleep 3
-
-echo "[6/7] Setup Zextras Repo..."
-echo "deb [arch=amd64 signed-by=/usr/share/keyrings/zextras.gpg] https://repo.zextras.io/release/ubuntu jammy main" > /etc/apt/source.list.d/zextras.list
-    wget -O- "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x5dc7680bc4378c471a7fa80f52fd40243e584a21" | gpg --dearmor | sudo tee /usr/share/keyrings/zextras.gpg > /dev/null
-    chmod 644 /usr/share/keyrings/zextras.gpg
 
 sleep 3
-echo 
-echo 
+# ==== Setup Zextras Repo ====
+echo
+echo
+echo "[7/7] Setup Zextras Repo..."
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/zextras.gpg] https://repo.zextras.io/release/ubuntu jammy main" > /etc/apt/sources.list.d/zextras.list
+wget -qO- "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x5dc7680bc4378c471a7fa80f52fd40243e584a21" | gpg --dearmor | sudo tee /usr/share/keyrings/zextras.gpg >/dev/null
+chmod 644 /usr/share/keyrings/zextras.gpg
+
+sleep 3
+echo
+echo
 echo "===================================================================="
 echo "= Setup selesai! Detail:                                           "
 echo "= - Hostname  : $(hostname)                                        "
 echo "= - Domain    : $DOMAIN                                            "
 echo "= - PostgreSQL: version 16 (running)                               "
-echo "= - Catatan   : DNS server belum di setup silahkan di setup manual " 
+echo "= - Catatan   : DNS server belum di setup silahkan di setup manual "
 echo "===================================================================="
