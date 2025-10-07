@@ -157,22 +157,37 @@ sleep 3
 # ==== Install PostgreSQL 16 ====
 echo
 echo
-echo "[6/7] Installing PostgreSQL 16..."
-if [ "$OS" == "ubuntu" ] || [ "$OS" == "debian" ]; then
-    # Tambah repo PostgreSQL
-    echo "deb [signed-by=/usr/share/keyrings/postgres.gpg] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
-    | sudo tee /etc/apt/sources.list.d/pgdg.list
+echo
+echo
+echo "[6/7] PostgreSQL 16 installation (optional)..."
+read -p "Apakah ingin menginstal PostgreSQL 16 (untuk LDAP)? (y/n): " INSTALL_PG
 
-    # Download GPG key PostgreSQL
-    wget -qO- "https://www.postgresql.org/media/keys/ACCC4CF8.asc" | \
-    gpg --dearmor | sudo tee /usr/share/keyrings/postgres.gpg >/dev/null
-    chmod 644 /usr/share/keyrings/postgres.gpg
+if [ "$INSTALL_PG" == "y" ]; then
+    echo "🚀 Memulai instalasi PostgreSQL 16..."
+    if [ "$OS" == "ubuntu" ] || [ "$OS" == "debian" ]; then
+        # Tambah repo PostgreSQL
+        echo "deb [signed-by=/usr/share/keyrings/postgres.gpg] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+        | sudo tee /etc/apt/sources.list.d/pgdg.list
 
-    # Update dan install PostgreSQL 16
-    sudo apt update -y
-    sudo apt install -y postgresql-16 postgresql-client-16
-    systemctl enable --now postgresql
-    echo "✅ PostgreSQL 16 terinstall & berjalan."
+        # Download GPG key PostgreSQL
+        wget -qO- "https://www.postgresql.org/media/keys/ACCC4CF8.asc" | \
+        gpg --dearmor | sudo tee /usr/share/keyrings/postgres.gpg >/dev/null
+        chmod 644 /usr/share/keyrings/postgres.gpg
+
+        # Update dan install PostgreSQL 16
+        sudo apt update -y
+        sudo apt install -y postgresql-16 postgresql-client-16
+        systemctl enable --now postgresql
+        echo "✅ PostgreSQL 16 terinstall & berjalan."
+    elif [ "$OS" == "rhel" ]; then
+        dnf install -y https://download.postgresql.org/pub/repos/yum/16/redhat/rhel-$(rpm -E %{rhel})-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+        dnf install -y postgresql16 postgresql16-server
+        /usr/pgsql-16/bin/postgresql-16-setup initdb
+        systemctl enable --now postgresql-16
+        echo "✅ PostgreSQL 16 terinstall & berjalan."
+    fi
+else
+    echo "⏭️  Melewati instalasi PostgreSQL 16."
 fi
 
 sleep 3
