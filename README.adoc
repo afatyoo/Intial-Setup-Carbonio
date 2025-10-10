@@ -20,6 +20,8 @@ The main goal is to ensure the environment meets the minimum requirements so the
 * Detect firewall & SELinux/AppArmor status
 * Check for potential conflicting services
 * Provide a report indicating if the server is ready for Carbonio installation
+* Setup repo and install Postgress (if single server)
+* Setup repo zextras
 
 == 🚀 Usage
 
