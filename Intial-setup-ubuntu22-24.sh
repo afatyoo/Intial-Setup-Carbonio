@@ -195,10 +195,36 @@ sleep 3
 echo
 echo
 echo "[7/7] Setup Zextras Repo..."
-echo "deb [arch=amd64 signed-by=/usr/share/keyrings/zextras.gpg] https://repo.zextras.io/release/ubuntu jammy main" > /etc/apt/sources.list.d/zextras.list
-wget -qO- "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x5dc7680bc4378c471a7fa80f52fd40243e584a21" | gpg --dearmor | sudo tee /usr/share/keyrings/zextras.gpg >/dev/null
-chmod 644 /usr/share/keyrings/zextras.gpg
 
+if [ "$OS" == "ubuntu" ]; then
+    UBUNTU_CODENAME=$(lsb_release -cs)
+    echo "Detected Ubuntu codename: $UBUNTU_CODENAME"
+
+    case "$UBUNTU_CODENAME" in
+        jammy)
+            echo "➡️  Menggunakan repo Zextras untuk Ubuntu 22.04 (Jammy)..."
+            echo "deb [arch=amd64 signed-by=/usr/share/keyrings/zextras.gpg] https://repo.zextras.io/release/ubuntu jammy main" \
+            | sudo tee /etc/apt/sources.list.d/zextras.list
+            ;;
+        noble)
+            echo "➡️  Menggunakan repo Zextras untuk Ubuntu 24.04 (Noble)..."
+            echo "deb [arch=amd64 signed-by=/usr/share/keyrings/zextras.gpg] https://repo.zextras.io/release/ubuntu noble main" \
+            | sudo tee /etc/apt/sources.list.d/zextras.list
+            ;;
+        *)
+            echo "⚠️  Versi Ubuntu tidak dikenali. Default ke Jammy."
+            echo "deb [arch=amd64 signed-by=/usr/share/keyrings/zextras.gpg] https://repo.zextras.io/release/ubuntu jammy main" \
+            | sudo tee /etc/apt/sources.list.d/zextras.list
+            ;;
+    esac
+
+    wget -qO- "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x5dc7680bc4378c471a7fa80f52fd40243e584a21" \
+    | gpg --dearmor | sudo tee /usr/share/keyrings/zextras.gpg >/dev/null
+    chmod 644 /usr/share/keyrings/zextras.gpg
+
+else
+    echo "⚠️  Bagian ini hanya untuk Ubuntu, dilewati..."
+fi
 sleep 3
 echo
 echo
