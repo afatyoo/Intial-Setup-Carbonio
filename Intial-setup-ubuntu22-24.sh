@@ -8,7 +8,7 @@ sleep 3
 
 # ==== Check Static IP ====
 echo
-echo "[0/8] Checking network configuration..."
+echo "[0/9] Checking network configuration..."
 if grep -q "^[[:space:]]*dhcp4:[[:space:]]*true" /etc/netplan/*.yaml 2>/dev/null; then
     echo "❌ Server masih pakai DHCP"
     exit 1
@@ -20,14 +20,37 @@ sleep 3
 
 # ==== Update system ====
 echo
-echo "[1/8] Updating system..."
+echo "[1/9] Updating system..."
 apt update -y && apt upgrade -y
+
+sleep 3
+
+# ==== Configure Locale ====
+echo
+echo "[2/9] Configuring locale (en_US.UTF-8 required for Carbonio)..."
+
+# Install locale package if needed
+apt install -y locales
+
+# Enable en_US.UTF-8 in locale.gen
+sed -i 's/^# *en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+
+# Generate locales
+locale-gen en_US.UTF-8
+
+# Set default locale
+update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+
+# Apply
+localectl set-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+
+echo "✅ Locale set to en_US.UTF-8"
 
 sleep 3
 
 # ==== Install base packages ====
 echo
-echo "[2/8] Installing required packages..."
+echo "[3/9] Installing required packages..."
 apt install -y dnsmasq chrony net-tools curl vim resolvconf \
 perl python3 wget gnupg lsb-release
 
@@ -35,7 +58,7 @@ sleep 3
 
 # ==== Hostname & Hosts ====
 echo
-echo "[3/8] Configuring hostname & hosts..."
+echo "[4/9] Configuring hostname & hosts..."
 read -p "IP Address server        : " IPADDRESS
 read -p "Hostname (contoh: mail) : " HOSTNAME
 read -p "Domain (contoh: afatyo.com): " DOMAIN
@@ -63,7 +86,7 @@ sleep 3
 
 # ==== DNSMASQ ====
 echo
-echo "[4/8] Configuring DNS using dnsmasq..."
+echo "[5/9] Configuring DNS using dnsmasq..."
 
 DNSCONF="/etc/dnsmasq.d/${DOMAIN}.conf"
 
@@ -91,7 +114,7 @@ sleep 3
 
 # ==== Time Sync ====
 echo
-echo "[5/8] Configuring Chrony..."
+echo "[6/9] Configuring Chrony..."
 systemctl disable --now systemd-timesyncd 2>/dev/null || true
 systemctl enable --now chrony
 timedatectl set-timezone Asia/Jakarta
@@ -101,7 +124,7 @@ sleep 3
 
 # ==== Firewall ====
 echo
-echo "[6/8] Firewall configuration..."
+echo "[7/9] Firewall configuration..."
 read -p "Matikan UFW? (y/n): " FW
 if [ "$FW" == "y" ]; then
     systemctl disable --now ufw 2>/dev/null || true
@@ -114,7 +137,7 @@ sleep 3
 
 # ==== PostgreSQL 16 (OPTIONAL) ====
 echo
-echo "[7/8] PostgreSQL 16 installation (optional)"
+echo "[8/9] PostgreSQL 16 installation (optional)"
 read -p "Install PostgreSQL 16 sekarang? (y/n): " INSTALL_PG
 
 if [ "$INSTALL_PG" == "y" ]; then
@@ -141,7 +164,7 @@ sleep 3
 
 # ==== Zextras Repo ====
 echo
-echo "[8/8] Setup Zextras repository..."
+echo "[9/9] Setup Zextras repository..."
 
 UBUNTU_CODENAME=$(lsb_release -cs)
 
@@ -161,5 +184,6 @@ echo "= Hostname : $(hostname)                                           ="
 echo "= Domain   : $DOMAIN                                               ="
 echo "= DNS      : dnsmasq                                               ="
 echo "= PostgreSQL : $(systemctl is-active postgresql 2>/dev/null || echo skipped) ="
+echo "= Locale   : $(localectl status | grep "System Locale")           ="
 echo "= NEXT     : Install Carbonio                                      ="
 echo "===================================================================="
