@@ -62,10 +62,16 @@ echo
 echo "[3/11] Configuring system locale (en_US.UTF-8)..."
 
 dnf install -y glibc-langpack-en
+
+# Set locale system-wide
 localectl set-locale LANG=en_US.UTF-8
 
+# Export for current session (important for installer)
+export LANG=en_US.UTF-8
+
 echo "✅ Locale configured:"
-localectl status | grep "System Locale"
+echo "LANG=$LANG"
+localectl status | grep LANG || true
 
 sleep 3
 
