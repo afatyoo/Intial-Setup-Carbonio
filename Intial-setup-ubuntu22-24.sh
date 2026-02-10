@@ -27,24 +27,26 @@ sleep 3
 
 # ==== Configure Locale ====
 echo
-echo "[2/9] Configuring locale (en_US.UTF-8 required for Carbonio)..."
+echo "[2/9] Configuring locale (en_US.UTF-8 for Carbonio | Ubuntu 24)..."
 
-# Install locale package if needed
 apt install -y locales
 
-# Enable en_US.UTF-8 in locale.gen
-sed -i 's/^# *en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+# Pastikan locale aktif
+if ! grep -q "^en_US.UTF-8 UTF-8" /etc/locale.gen; then
+    sed -i 's/^# *en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+fi
 
-# Generate locales
-locale-gen en_US.UTF-8
+# Generate locale
+locale-gen
 
-# Set default locale
-update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+# Set system locale (Ubuntu 24 preferred way)
+update-locale LANG=en_US.UTF-8
 
-# Apply
-localectl set-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+# Reload environment
+export LANG=en_US.UTF-8
 
-echo "✅ Locale set to en_US.UTF-8"
+echo "✅ Locale configured:"
+locale
 
 sleep 3
 
